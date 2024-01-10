@@ -5,6 +5,6 @@ CREATE TABLE "users" (
     email VARCHAR(255) UNIQUE,
     phone VARCHAR(50),
     password VARCHAR(255),
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP
+    created_at BIGINT NOT NULL,
+    updated_at BIGINT
 );

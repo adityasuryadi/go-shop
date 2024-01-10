@@ -6,14 +6,23 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/adityasuryadi/go-shop/pkg/logger"
+	"github.com/adityasuryadi/go-shop/services/user/internal/config"
 	handlerHttp "github.com/adityasuryadi/go-shop/services/user/internal/delivery/http"
+	"github.com/adityasuryadi/go-shop/services/user/internal/repository"
+	"github.com/adityasuryadi/go-shop/services/user/internal/usecase"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
+	configViper := config.NewViper()
+	logger := logger.NewLogger()
+	db := config.NewDatabase(configViper)
 	router := mux.NewRouter()
-	userController := handlerHttp.NewUserController(router)
+	userRepository := repository.NewUserRepository(logger)
+	userUsecase := usecase.NewUserUsecase(db, userRepository)
+	userController := handlerHttp.NewUserController(router, userUsecase, logger)
 	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		// an example API handler
 		json.NewEncoder(w).Encode(map[string]bool{"ok": true})

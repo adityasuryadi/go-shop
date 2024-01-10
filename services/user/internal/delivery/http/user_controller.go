@@ -1,9 +1,11 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
+	"github.com/adityasuryadi/go-shop/pkg/logger"
 	"github.com/adityasuryadi/go-shop/services/user/internal/model"
 	"github.com/adityasuryadi/go-shop/services/user/internal/usecase"
 
@@ -13,11 +15,14 @@ import (
 type UserController struct {
 	Router  *mux.Router
 	Usecase usecase.UserUsecase
+	logger  *logger.Logger
 }
 
-func NewUserController(r *mux.Router) UserController {
+func NewUserController(r *mux.Router, userUsecase usecase.UserUsecase, log *logger.Logger) UserController {
 	return UserController{
-		Router: r,
+		Router:  r,
+		Usecase: userUsecase,
+		logger:  log,
 	}
 }
 
@@ -30,12 +35,17 @@ func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode("Bad Request")
 		return
 	}
+
+	response, err := c.Usecase.Insert(context.Background(), payload)
+	if err != nil {
+		c.logger.Errorf("failed to create user ", err)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(model.WebResponse[*model.CreateUserRequest]{
+	json.NewEncoder(w).Encode(model.WebResponse[*model.UserResponse]{
 		Code:   200,
 		Status: "OK",
-		Data:   payload,
+		Data:   response,
 		Paging: nil,
 	})
 }

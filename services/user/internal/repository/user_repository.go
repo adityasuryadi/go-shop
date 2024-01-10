@@ -7,5 +7,9 @@ import (
 )
 
 type UserRepository interface {
-	Insert(db *gorm.DB, user *entity.User) (*entity.User, error)
+	Create(db *gorm.DB, entity *entity.User) (*entity.User, error)
+	Update(db *gorm.DB, entity *entity.User) error
+	Delete(db *gorm.DB, entity *entity.User) error
+	CountById(db *gorm.DB, id any) (int64, error)
+	FindById(db *gorm.DB, entity *entity.User, id any) error
 }
