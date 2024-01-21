@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -23,10 +22,7 @@ func main() {
 	userRepository := repository.NewUserRepository(logger)
 	userUsecase := usecase.NewUserUsecase(db, userRepository)
 	userController := handlerHttp.NewUserController(router, userUsecase, logger)
-	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		// an example API handler
-		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
-	})
+
 	userController.InitRoute(router)
 	srv := &http.Server{
 		Handler: router,

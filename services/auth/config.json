@@ -29,7 +29,8 @@
     },
     "jwt":{
       "key":"rahasia",
-      "duration":60
+      "duration":3600,
+      "kid":"MDNGMjU2M0U3RERFQUEwOUUzQUMwQ0NBN0Y1RUY0OEIxNTRDM0IxMw"
     }
   }
   

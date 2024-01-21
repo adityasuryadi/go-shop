@@ -29,7 +29,6 @@ func (u *UserUsecaseImpl) Insert(ctx context.Context, request *model.CreateUserR
 		apilog.Errorf("failed to create user ", err)
 		return nil, err
 	}
-
 	user := &entity.User{
 		FirtsName: request.FirstName,
 		LastName:  request.LastName,
@@ -49,6 +48,18 @@ func (u *UserUsecaseImpl) Insert(ctx context.Context, request *model.CreateUserR
 		apilog.Errorf("failed to create user ", err)
 		return nil, err
 	}
+	return response, nil
+}
+
+func (u *UserUsecaseImpl) FindById(id string) (*model.UserResponse, error) {
+	tx := u.db
+	user := new(entity.User)
+	err := u.repository.FindById(tx, user, id)
+	if err != nil {
+		return nil, err
+	}
+
+	response := converter.UserToResponse(user)
 	return response, nil
 }
 

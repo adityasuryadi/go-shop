@@ -51,27 +51,36 @@ func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) Get(w http.ResponseWriter, r *http.Request) {
-	var user model.UserResponse
-	user = model.UserResponse{
-		FirstName: "Aditya",
-		LastName:  "Suryadi",
-		Email:     "adit@mail.com",
-		Phone:     "09372487234",
-		CreatedAt: 123124,
-		UpdatedAt: 124124,
+	vars := mux.Vars(r)
+	userId := vars["user_id"]
+	user, err := c.Usecase.FindById(userId)
+	if err != nil {
+		c.logger.Errorf("failed get user", err)
 	}
 
+	if user == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(model.WebResponse[*model.UserResponse]{
+			Code:   http.StatusNotFound,
+			Status: "NOT_FOUND",
+			Data:   nil,
+			Paging: nil,
+		})
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(model.WebResponse[model.UserResponse]{
+	json.NewEncoder(w).Encode(model.WebResponse[*model.UserResponse]{
 		Code:   200,
 		Status: "OK",
 		Data:   user,
 		Paging: nil,
 	})
+	return
 }
 
 func (c *UserController) InitRoute(Router *mux.Router) {
-	Router.HandleFunc("/", c.Get).Methods("GET")
-	Router.HandleFunc("/", c.Create).Methods("POST")
+	Router.HandleFunc("/user/{user_id}", c.Get).Methods("GET")
+	Router.HandleFunc("/user", c.Create).Methods("POST")
 }

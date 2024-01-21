@@ -1,0 +1,94 @@
+{
+    "$schema": "https://www.krakend.io/schema/krakend.json",
+    "version": 3,
+    "name": "KrakenD - API Gateway",
+    "timeout": "3000ms",
+    "cache_ttl": "300s",
+    "host": ["http://localhost:8080"],
+    "output_encoding": "json",
+    "extra_config": {
+      "security/cors": {
+          "allow_origins": ["*"],
+          "allow_methods": [
+              "POST",
+              "GET",
+              "PUT",
+              "DELETE",
+              "PATCH"
+          ],
+          "allow_headers": [
+              "Accept",
+              "Origin",
+              "Authorization",
+              "Content-Length",
+              "Content-Type"
+          ],
+          "max_age": "12h"
+      },
+      "auth/revoker": {
+          "N": 10000000,
+          "P": 0.0000001,
+          "hash_name": "optimal",
+          "TTL": 172800,
+          "port": 8180,
+          "token_keys": ["jti", "sub"]
+      },
+      "router": {
+          "return_error_msg": true
+      }
+  },
+    "endpoints": [
+      {
+        "endpoint": "/v1/user/{user_id}",
+        "method": "GET",
+        "output_encoding": "json",
+        "backend": [
+          {
+            "host": ["http://localhost:8000"],
+            "url_pattern": "/user/{user_id}",
+            "encoding": "json",
+            "sd": "static",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "endpoint": "/v1/user",
+        "method": "POST",
+        "output_encoding": "json",
+        "backend": [
+          {
+            "host": ["http://localhost:8000"],
+            "url_pattern": "/user",
+            "encoding": "json",
+            "sd": "static",
+            "method": "POST"
+          }
+        ]
+      },
+      {
+        "endpoint": "/v1/auth/test",
+        "method": "GET",
+        "input_headers": ["Authorization","x-email"],
+        "output_encoding": "json",
+        "extra_config": {
+          "auth/validator": {
+              "alg": "HS256",
+              "disable_jwk_security": true,
+              "operation_debug": true,
+              "jwk_url": "http://localhost:8001/static/jwks.json",
+              "propagate_claims": [["email","x-email"]]
+          }
+        },
+        "backend": [
+          {
+            "host": ["http://localhost:8001"],
+            "url_pattern": "/test",
+            "encoding": "json",
+            "sd": "static",
+            "method": "GET"
+          }
+        ]
+      }
+    ]
+  }

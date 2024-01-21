@@ -8,4 +8,5 @@ import (
 
 type UserUsecase interface {
 	Insert(context.Context, *model.CreateUserRequest) (*model.UserResponse, error)
+	FindById(id string) (*model.UserResponse, error)
 }
