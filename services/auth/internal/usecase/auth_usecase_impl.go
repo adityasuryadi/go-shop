@@ -16,18 +16,25 @@ type AuthUsecaseImpl struct {
 	userRepository repository.UserRepository
 	jwtConfig      *config.JwtConfig
 	logger         *logger.Logger
+	validation     *config.Validation
 }
 
-func NewAuthUsecase(userRepo repository.UserRepository, db *gorm.DB, jwtConfig *config.JwtConfig, logger *logger.Logger) AuthUsecase {
+func NewAuthUsecase(userRepo repository.UserRepository, db *gorm.DB, jwtConfig *config.JwtConfig, logger *logger.Logger, validation *config.Validation) AuthUsecase {
 	return &AuthUsecaseImpl{
 		db:             db,
 		userRepository: userRepo,
 		jwtConfig:      jwtConfig,
 		logger:         logger,
+		validation:     validation,
 	}
 }
 
 func (u *AuthUsecaseImpl) Login(request *model.LoginRequest) (string, error) {
+	err := u.validation.ValidateRequest(request)
+	if err != nil {
+		return "", err
+	}
+
 	db := u.db.Begin()
 	email := request.Email
 	user, err := u.userRepository.FindUserByEmail(db, email)

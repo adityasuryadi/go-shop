@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/adityasuryadi/go-shop/pkg/logger"
+	"github.com/adityasuryadi/go-shop/services/auth/internal/config"
 	middleware "github.com/adityasuryadi/go-shop/services/auth/internal/delivery"
 	"github.com/adityasuryadi/go-shop/services/auth/internal/model"
 	"github.com/adityasuryadi/go-shop/services/auth/internal/usecase"
@@ -35,9 +36,19 @@ func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode("Bad Request")
 		return
 	}
+
+	validation := new(config.Validation)
 	accessToken, err := c.Usecase.Login(payload)
 	if err != nil {
-		fmt.Println("failed create token", err)
+		errValidation := validation.ErrorJson(err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.ErrorResponse[any]{
+			Code:   http.StatusBadRequest,
+			Status: "BAD_REQUEST",
+			Error:  errValidation,
+		})
+		return
 	}
 	json.NewEncoder(w).Encode(model.WebResponse[*model.LoginResponse]{
 		Code:   http.StatusOK,

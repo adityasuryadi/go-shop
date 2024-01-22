@@ -17,19 +17,16 @@ func main() {
 	configViper := config.NewViper()
 	logger := logger.NewLogger()
 	jwtConfig := config.NewJWT(configViper)
+	validation := config.NewValidation()
 	db := config.NewDatabase(configViper)
 	router := chi.NewRouter()
 	userRepository := repository.NewUserRespository()
-	authUsecase := usecase.NewAuthUsecase(userRepository, db, jwtConfig, logger)
+	authUsecase := usecase.NewAuthUsecase(userRepository, db, jwtConfig, logger, validation)
 	authController := handlerHttp.NewAuthController(router, authUsecase, logger)
 	authController.InitRoute(router)
 
-	// router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("data"))))
-	// router.HandleFunc("/cek", func(w http.ResponseWriter, r *http.Request) {
-	// 	dir, _ := os.Getwd()
-	// 	fmt.Println("current path :" + dir)
-	// 	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
-	// })
+	fs := http.FileServer(http.Dir("data"))
+	router.Handle("/static/*", http.StripPrefix("/static/", fs))
 	srv := &http.Server{
 		Handler: router,
 		Addr:    "127.0.0.1:8001",
