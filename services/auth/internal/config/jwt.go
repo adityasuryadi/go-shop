@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -40,16 +39,15 @@ func (j *JwtConfig) ClaimAccessToken(email string) (string, error) {
 
 func (j *JwtConfig) ClaimRefreshToken(email string) (string, error) {
 	claims := jwt.MapClaims{
-		"key":   "rahasia",
 		"email": email,
 		"exp":   time.Now().Add(time.Hour * 7200).Unix(),
 	}
 
 	// Create token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
+	token.Header["kid"] = "sim2"
 	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	t, err := token.SignedString([]byte(j.config.GetString("jwt.key")))
 	if err != nil {
 		return "", err
 	}

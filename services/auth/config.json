@@ -31,6 +31,11 @@
       "key":"rahasia",
       "duration":3600,
       "kid":"MDNGMjU2M0U3RERFQUEwOUUzQUMwQ0NBN0Y1RUY0OEIxNTRDM0IxMw"
+    },
+    "redis":{
+      "host":"localhost:6379",
+      "password":"",
+      "db":0
     }
   }
   
