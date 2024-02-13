@@ -1,6 +1,8 @@
 package repository
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Repository[T any] struct {
 	DB *gorm.DB
@@ -25,5 +27,6 @@ func (r *Repository[T]) CountById(db *gorm.DB, id any) (int64, error) {
 }
 
 func (r *Repository[T]) FindById(db *gorm.DB, entity *T, id any) error {
-	return db.Where("id = ?", id).Take(entity).Error
+	err := db.Where("id = ?", id).Take(entity).Debug().Error
+	return err
 }

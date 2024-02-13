@@ -7,4 +7,5 @@ import (
 
 type ProductUsecase interface {
 	Create(request *model.CreateProductRequest) (response *model.ProductResponse, err *exception.CustomError)
+	FindById(id string) (response *model.ProductResponse, err *exception.CustomError)
 }

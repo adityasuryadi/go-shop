@@ -1,10 +1,14 @@
 package usecase
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/adityasuryadi/go-shop/pkg/exception"
 	"github.com/adityasuryadi/go-shop/services/product/internal/config"
 	"github.com/adityasuryadi/go-shop/services/product/internal/entity"
 	"github.com/adityasuryadi/go-shop/services/product/internal/model"
+	"github.com/adityasuryadi/go-shop/services/product/internal/model/converter"
 	"github.com/adityasuryadi/go-shop/services/product/internal/repository"
 	"gorm.io/gorm"
 )
@@ -13,6 +17,30 @@ type ProductUsecaseImpl struct {
 	db          *gorm.DB
 	productRepo repository.ProductRepository
 	validation  *config.Validation
+}
+
+// FindById implements ProductUsecase.
+func (u *ProductUsecaseImpl) FindById(id string) (*model.ProductResponse, *exception.CustomError) {
+	if id == "" {
+		return nil, &exception.CustomError{
+			Status: exception.ERRRBADREQUEST,
+			Errors: errors.New("id required"),
+		}
+	}
+
+	result, err := u.productRepo.FindById(id)
+	fmt.Println("result", result)
+	fmt.Println("err ", err)
+	if err != nil {
+		return nil, &exception.CustomError{
+			Status: exception.ERRNOTFOUND,
+			Errors: errors.New("product not found"),
+		}
+	}
+
+	response := converter.ProductToResponse(result)
+	fmt.Println(response)
+	return response, nil
 }
 
 func NewProductUsecase(db *gorm.DB, productRepository repository.ProductRepository, validation *config.Validation) ProductUsecase {

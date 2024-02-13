@@ -66,6 +66,47 @@ func (c *ProductController) Create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func (c *ProductController) FindProductById(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	result, err := c.Usecase.FindById(id)
+
+	if err != nil && err.Status == exception.ERRNOTFOUND {
+		errResponse := model.ErrorResponse[any]{
+			Code:   http.StatusNotFound,
+			Status: "NOT_FOUND",
+			Error:  err.Errors.Error(),
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(errResponse)
+		return
+	}
+
+	if err != nil {
+		errResponse := model.ErrorResponse[any]{
+			Code:   http.StatusBadRequest,
+			Status: "BAD_REQUEST",
+			Error:  err.Errors,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(errResponse)
+		return
+	}
+
+	response := model.WebResponse[*model.ProductResponse]{
+		Code:   http.StatusOK,
+		Status: "OK",
+		Data:   result,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+
+}
+
 func (c *ProductController) InitRoute(Router *chi.Mux) {
 	Router.Post("/", c.Create)
+	Router.Get("/{id}", c.FindProductById)
 }

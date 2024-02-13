@@ -24,3 +24,12 @@ func (r *ProductRepositoryImpl) Store(product *entity.Product) (*entity.Product,
 	}
 	return product, nil
 }
+
+func (r *ProductRepositoryImpl) FindById(id string) (*entity.Product, error) {
+	product := new(entity.Product)
+	err := r.Repository.FindById(r.db, product, id)
+	if err != nil {
+		return nil, err
+	}
+	return product, nil
+}
