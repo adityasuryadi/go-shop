@@ -2,7 +2,9 @@ package http
 
 import (
 	"encoding/json"
+	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/adityasuryadi/go-shop/pkg/exception"
 	"github.com/adityasuryadi/go-shop/pkg/logger"
@@ -106,7 +108,55 @@ func (c *ProductController) FindProductById(w http.ResponseWriter, r *http.Reque
 
 }
 
+// search product
+func (c *ProductController) Search(w http.ResponseWriter, r *http.Request) {
+	// TODO
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
+	request := &model.SearchProductRequest{
+		Page: page,
+		Size: size,
+	}
+	validation := new(config.Validation)
+	result, total, err := c.Usecase.Search(request)
+
+	if err != nil && err.Status == exception.ERRRBADREQUEST {
+		errValidation := validation.ErrorJson(err.Errors)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.ErrorResponse[any]{
+			Code:   http.StatusBadRequest,
+			Status: "BAD_REQUEST",
+			Error:  errValidation,
+		})
+		return
+	}
+
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("Bad Request")
+		return
+	}
+
+	response := model.WebResponse[[]*model.ProductResponse]{
+		Code:   http.StatusOK,
+		Status: "OK",
+		Data:   result,
+		Paging: &model.PageMetadata{
+			Page:      page,
+			Size:      size,
+			TotalItem: total,
+			TotalPage: int64(math.Ceil(float64(total) / float64(size))),
+		},
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
 func (c *ProductController) InitRoute(Router *chi.Mux) {
 	Router.Post("/", c.Create)
 	Router.Get("/{id}", c.FindProductById)
+	Router.Get("/search", c.Search)
 }

@@ -19,6 +19,25 @@ type ProductUsecaseImpl struct {
 	validation  *config.Validation
 }
 
+// search product
+func (u *ProductUsecaseImpl) Search(request *model.SearchProductRequest) ([]*model.ProductResponse, int64, *exception.CustomError) {
+	err := u.validation.ValidateRequest(request)
+	if err != nil {
+		return nil, 0, &exception.CustomError{
+			Status: exception.ERRRBADREQUEST,
+			Errors: err,
+		}
+	}
+
+	result, total, err := u.productRepo.Search(request)
+	responses := make([]*model.ProductResponse, len(result))
+	for i, v := range result {
+		responses[i] = converter.ProductToResponse(&v)
+	}
+
+	return responses, total, nil
+}
+
 // FindById implements ProductUsecase.
 func (u *ProductUsecaseImpl) FindById(id string) (*model.ProductResponse, *exception.CustomError) {
 	if id == "" {

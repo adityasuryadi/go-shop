@@ -28,3 +28,8 @@ type ProductResponse struct {
 	Stock       int64  `json:"stock"`
 	Description string `json:"description"`
 }
+
+type SearchProductRequest struct {
+	Page int `json:"page" validate:"required,numeric,min=1"`
+	Size int `json:"size" validate:"required,numeric,min=1,max=100"`
+}
