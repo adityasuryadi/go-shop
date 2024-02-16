@@ -151,5 +151,29 @@ func (u *ProductUsecaseImpl) Update(id string, request *model.UpdateProductReque
 }
 
 func (u *ProductUsecaseImpl) Delete(id string) *exception.CustomError {
+	// validasi product
+	if id == "" {
+		return &exception.CustomError{
+			Status: exception.ERRRBADREQUEST,
+			Errors: errors.New("id required"),
+		}
+	}
+
+	// find product
+	product, err := u.productRepo.FindById(id)
+	if err != nil {
+		return &exception.CustomError{
+			Status: exception.ERRNOTFOUND,
+			Errors: errors.New("product not found"),
+		}
+	}
+
+	err = u.productRepo.Delete(product)
+	if err != nil {
+		return &exception.CustomError{
+			Status: exception.ERRBUSSINESS,
+			Errors: err,
+		}
+	}
 	return nil
 }

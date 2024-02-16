@@ -221,9 +221,49 @@ func (c *ProductController) Update(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func (c *ProductController) Delete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	err := c.Usecase.Delete(id)
+
+	if err != nil && err.Status == exception.ERRNOTFOUND {
+		errResponse := model.ErrorResponse[any]{
+			Code:   http.StatusNotFound,
+			Status: "NOT_FOUND",
+			Error:  err.Errors.Error(),
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(errResponse)
+		return
+	}
+
+	if err != nil {
+		errResponse := model.ErrorResponse[any]{
+			Code:   http.StatusBadRequest,
+			Status: "BAD_REQUEST",
+			Error:  err.Errors,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(errResponse)
+		return
+	}
+
+	response := model.WebResponse[*model.ProductResponse]{
+		Code:   http.StatusOK,
+		Status: "OK",
+		Data:   nil,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
 func (c *ProductController) InitRoute(Router *chi.Mux) {
 	Router.Post("/", c.Create)
 	Router.Get("/{id}", c.FindProductById)
 	Router.Get("/search", c.Search)
 	Router.Put("/{id}", c.Update)
+	Router.Delete("/{id}", c.Delete)
 }

@@ -10,5 +10,6 @@ type ProductRepository interface {
 	FindById(id string) (*entity.Product, error)
 	Search(request *model.SearchProductRequest) ([]entity.Product, int64, error)
 	Update(product *entity.Product) (*entity.Product, error)
+	Delete(product *entity.Product) error
 	// FindAll() ([]entity.Product, error)
 }

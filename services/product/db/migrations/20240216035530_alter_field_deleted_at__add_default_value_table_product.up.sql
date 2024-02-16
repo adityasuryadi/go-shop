@@ -1,0 +1,3 @@
+ALTER TABLE products 
+ALTER COLUMN deleted_at
+SET DEFAULT 0;
