@@ -55,3 +55,15 @@ func (r *ProductRepositoryImpl) FindById(id string) (*entity.Product, error) {
 	}
 	return product, nil
 }
+
+func (r *ProductRepositoryImpl) Update(product *entity.Product) (*entity.Product, error) {
+	err := r.Repository.Update(r.db, product)
+	if err != nil {
+		return nil, err
+	}
+	return product, nil
+}
+
+func (r *ProductRepositoryImpl) Delete(product *entity.Product) error {
+	return r.Repository.Delete(r.db, product)
+}

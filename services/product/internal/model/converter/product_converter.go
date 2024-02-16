@@ -11,5 +11,7 @@ func ProductToResponse(product *entity.Product) *model.ProductResponse {
 		Price:       product.Price,
 		Stock:       product.Stock,
 		Description: product.Description,
+		CreatedAt:   product.CreatedAt,
+		UpdatedAt:   product.UpdatedAt,
 	}
 }

@@ -9,5 +9,6 @@ type ProductRepository interface {
 	Store(product *entity.Product) (*entity.Product, error)
 	FindById(id string) (*entity.Product, error)
 	Search(request *model.SearchProductRequest) ([]entity.Product, int64, error)
+	Update(product *entity.Product) (*entity.Product, error)
 	// FindAll() ([]entity.Product, error)
 }
