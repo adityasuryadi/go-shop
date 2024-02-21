@@ -261,9 +261,9 @@ func (c *ProductController) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *ProductController) InitRoute(Router *chi.Mux) {
-	Router.Post("/", c.Create)
-	Router.Get("/{id}", c.FindProductById)
-	Router.Get("/search", c.Search)
-	Router.Put("/{id}", c.Update)
-	Router.Delete("/{id}", c.Delete)
+	Router.Post("/product", c.Create)
+	Router.Get("/product/{id}", c.FindProductById)
+	Router.Get("/product/search", c.Search)
+	Router.Put("/product/{id}", c.Update)
+	Router.Delete("/product/{id}", c.Delete)
 }

@@ -19,10 +19,19 @@ func main() {
 	validation := config.NewValidation()
 	config.NewDatabase(configViper)
 	db := config.NewDatabase(configViper)
+
+	// product repository
 	productRepository := repository.NewProductRepository(db)
 	productUsecase := usecase.NewProductUsecase(db, productRepository, validation)
 	ProductController := handlerHttp.NewProductController(router, productUsecase, logger.NewLogger())
 	ProductController.InitRoute(router)
+
+	// category repository
+	categoryRepository := repository.NewCategoryRepository(db)
+	categoryUsecase := usecase.NewCategoryUsecase(categoryRepository, validation)
+	CategoryController := handlerHttp.NewCategoryController(router, categoryUsecase)
+	CategoryController.InitRoute(router)
+
 	srv := &http.Server{
 		Handler: router,
 		Addr:    "127.0.0.1:8002",

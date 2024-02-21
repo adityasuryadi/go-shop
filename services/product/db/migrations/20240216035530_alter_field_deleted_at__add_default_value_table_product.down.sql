@@ -1,1 +1,3 @@
-DROP TABLE IF EXISTS "products";
+ALTER TABLE products 
+ALTER COLUMN deleted_at
+SET DEFAULT NULL;

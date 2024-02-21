@@ -18,7 +18,6 @@ func NewProductRepository(db *gorm.DB) ProductRepository {
 }
 
 // search product
-
 func (r *ProductRepositoryImpl) Search(request *model.SearchProductRequest) ([]entity.Product, int64, error) {
 	var products []entity.Product
 	err := r.db.Scopes(r.FilterOrder(request)).Offset((request.Page - 1) * request.Size).Limit(request.Size).Find(&products).Error
