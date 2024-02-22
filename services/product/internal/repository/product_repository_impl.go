@@ -38,12 +38,19 @@ func (r *ProductRepositoryImpl) FilterOrder(request *model.SearchProductRequest)
 }
 
 // Store implements ProductRepository.
-func (r *ProductRepositoryImpl) Store(product *entity.Product) (*entity.Product, error) {
-	err := r.Repository.Create(r.db, product)
+func (r *ProductRepositoryImpl) Store(tx *gorm.DB, product *entity.Product) (*entity.Product, error) {
+	// err := r.Repository.Create(r.db, product)
+	err := tx.Omit("Categories.*").Create(&product).Debug().Error
 	if err != nil {
 		return nil, err
 	}
 	return product, nil
+}
+
+func (r *ProductRepositoryImpl) AssignCategory(tx *gorm.DB, product *entity.Product, categories []*entity.Category) error {
+	tx.Model(&product).Association("Categories").Clear()
+	tx.Model(&product).Association("Categories").Append(categories)
+	return tx.Error
 }
 
 func (r *ProductRepositoryImpl) FindById(id string) (*entity.Product, error) {

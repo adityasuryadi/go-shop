@@ -22,7 +22,10 @@ func (entity *Category) TableName() string {
 }
 
 func (entity *Category) BeforeCreate(db *gorm.DB) error {
-	entity.Id = uuid.New()
+	// handle create record baru tiap append ke relasy many to many
+	if entity.Id == uuid.Nil {
+		entity.Id = uuid.New()
+	}
 	entity.CreatedAt = time.Now().Unix()
 	return nil
 }

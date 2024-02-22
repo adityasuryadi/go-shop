@@ -1,10 +1,11 @@
 package model
 
 type CreateProductRequest struct {
-	Name        string `json:"name" validate:"required"`
-	Price       int64  `json:"price" validate:"required,gte=1"`
-	Stock       int64  `json:"stock" validate:"required,gte=1"`
-	Description string `json:"description" validate:"required"`
+	Name        string   `json:"name" validate:"required"`
+	Price       int64    `json:"price" validate:"required,gte=1"`
+	Stock       int64    `json:"stock" validate:"required,gte=1"`
+	Description string   `json:"description" validate:"required"`
+	Categories  []string `json:"categories" validate:"required"`
 }
 
 type UpdateProductRequest struct {

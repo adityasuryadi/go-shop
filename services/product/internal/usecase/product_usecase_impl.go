@@ -10,6 +10,7 @@ import (
 	"github.com/adityasuryadi/go-shop/services/product/internal/model"
 	"github.com/adityasuryadi/go-shop/services/product/internal/model/converter"
 	"github.com/adityasuryadi/go-shop/services/product/internal/repository"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -72,6 +73,21 @@ func (u *ProductUsecaseImpl) FindById(id string) (*model.ProductResponse, *excep
 
 // Create implements ProductUsecase.
 func (u *ProductUsecaseImpl) Create(request *model.CreateProductRequest) (*model.ProductResponse, *exception.CustomError) {
+	categories := []*entity.Category{}
+	for _, v := range request.Categories {
+		categories = append(categories, &entity.Category{
+			Id: uuid.MustParse(v),
+		})
+	}
+
+	tx := u.db.Begin()
+
+	defer func() {
+		if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
+		}
+	}()
+
 	product := &entity.Product{
 		Name:        request.Name,
 		Stock:       request.Stock,
@@ -88,7 +104,8 @@ func (u *ProductUsecaseImpl) Create(request *model.CreateProductRequest) (*model
 		}
 	}
 
-	result, err := u.productRepo.Store(product)
+	result, err := u.productRepo.Store(tx, product)
+	u.productRepo.AssignCategory(tx, result, categories)
 	if err != nil {
 		return nil, &exception.CustomError{
 			Status: exception.ERRBUSSINESS,
