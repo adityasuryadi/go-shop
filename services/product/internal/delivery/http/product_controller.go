@@ -161,6 +161,29 @@ func (c *ProductController) Search(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func (c *ProductController) FilterProduct(w http.ResponseWriter, r *http.Request) {
+
+	decoder := json.NewDecoder(r.Body)
+	request := new(model.FilterProductRequest)
+	if err := decoder.Decode(&request); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("Bad Request")
+		return
+	}
+	response, err := c.Usecase.FilterProduct(request)
+
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("Bad Request")
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
 func (c *ProductController) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -266,4 +289,5 @@ func (c *ProductController) InitRoute(Router *chi.Mux) {
 	Router.Get("/product/search", c.Search)
 	Router.Put("/product/{id}", c.Update)
 	Router.Delete("/product/{id}", c.Delete)
+	Router.Post("/product/filter", c.FilterProduct)
 }

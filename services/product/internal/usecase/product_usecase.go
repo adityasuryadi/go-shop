@@ -11,4 +11,5 @@ type ProductUsecase interface {
 	Search(request *model.SearchProductRequest) (response []*model.ProductResponse, total int64, err *exception.CustomError)
 	Update(id string, request *model.UpdateProductRequest) (response *model.ProductResponse, err *exception.CustomError)
 	Delete(id string) *exception.CustomError
+	FilterProduct(request *model.FilterProductRequest) ([]*model.ProductResponse, *exception.CustomError)
 }
