@@ -10,6 +10,7 @@ import (
 	"github.com/adityasuryadi/go-shop/services/product/internal/model"
 	"github.com/adityasuryadi/go-shop/services/product/internal/model/converter"
 	"github.com/adityasuryadi/go-shop/services/product/internal/repository"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -46,6 +47,18 @@ func (u *ProductUsecaseImpl) Search(request *model.SearchProductRequest) ([]*mod
 	return responses, total, nil
 }
 
+func (u *ProductUsecaseImpl) FilterProduct(request *model.FilterProductRequest) ([]*model.ProductResponse, *exception.CustomError) {
+	result, err := u.productRepo.FilterProduct(request)
+	if err != nil {
+		return nil, &exception.CustomError{}
+	}
+	responses := make([]*model.ProductResponse, len(result))
+	for i, v := range result {
+		responses[i] = converter.ProductToResponse(&v)
+	}
+	return responses, nil
+}
+
 // FindById implements ProductUsecase.
 func (u *ProductUsecaseImpl) FindById(id string) (*model.ProductResponse, *exception.CustomError) {
 	if id == "" {
@@ -72,6 +85,21 @@ func (u *ProductUsecaseImpl) FindById(id string) (*model.ProductResponse, *excep
 
 // Create implements ProductUsecase.
 func (u *ProductUsecaseImpl) Create(request *model.CreateProductRequest) (*model.ProductResponse, *exception.CustomError) {
+	categories := []*entity.Category{}
+	for _, v := range request.Categories {
+		categories = append(categories, &entity.Category{
+			Id: uuid.MustParse(v),
+		})
+	}
+
+	tx := u.db.Begin()
+
+	defer func() {
+		if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
+		}
+	}()
+
 	product := &entity.Product{
 		Name:        request.Name,
 		Stock:       request.Stock,
@@ -88,7 +116,8 @@ func (u *ProductUsecaseImpl) Create(request *model.CreateProductRequest) (*model
 		}
 	}
 
-	result, err := u.productRepo.Store(product)
+	result, err := u.productRepo.Store(tx, product)
+	u.productRepo.AssignCategory(tx, result, categories)
 	if err != nil {
 		return nil, &exception.CustomError{
 			Status: exception.ERRBUSSINESS,
@@ -108,6 +137,14 @@ func (u *ProductUsecaseImpl) Create(request *model.CreateProductRequest) (*model
 // update product
 func (u *ProductUsecaseImpl) Update(id string, request *model.UpdateProductRequest) (*model.ProductResponse, *exception.CustomError) {
 	// validasi product
+	tx := u.db.Begin()
+
+	defer func() {
+		if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
+		}
+	}()
+
 	if id == "" {
 		return nil, &exception.CustomError{
 			Status: exception.ERRRBADREQUEST,
@@ -121,6 +158,13 @@ func (u *ProductUsecaseImpl) Update(id string, request *model.UpdateProductReque
 			Status: exception.ERRRBADREQUEST,
 			Errors: err,
 		}
+	}
+
+	categories := []*entity.Category{}
+	for _, v := range request.Categories {
+		categories = append(categories, &entity.Category{
+			Id: uuid.MustParse(v),
+		})
 	}
 
 	// find product
@@ -137,15 +181,17 @@ func (u *ProductUsecaseImpl) Update(id string, request *model.UpdateProductReque
 	product.Stock = request.Stock
 	product.Description = request.Description
 
-	product, err = u.productRepo.Update(product)
+	_, err = u.productRepo.Update(tx, product)
+	u.productRepo.AssignCategory(tx, product, categories)
+
+	result, err := u.productRepo.FindById(product.Id.String())
 	if err != nil {
 		return nil, &exception.CustomError{
 			Status: exception.ERRBUSSINESS,
 			Errors: err,
 		}
 	}
-
-	response := converter.ProductToResponse(product)
+	response := converter.ProductToResponse(result)
 
 	return response, nil
 }

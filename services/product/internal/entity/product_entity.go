@@ -14,6 +14,7 @@ type Product struct {
 	Price       int64                 `gorm:"column:price"`
 	Stock       int64                 `gorm:"column:stock"`
 	Description string                `gorm:"column:description"`
+	Categories  []Category            `gorm:"many2many:product_categories"`
 	CreatedAt   int64                 `gorm:"column:created_at;autoCreateTime:milli"`
 	UpdatedAt   int64                 `gorm:"column:updated_at;autoCreateTime:milli;autoUpdateTime:milli;default:null"`
 	DeletedAt   soft_delete.DeletedAt `gorm:"softDelete:milli"`
