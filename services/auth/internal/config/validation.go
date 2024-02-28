@@ -1,17 +1,45 @@
 package config
 
 import (
+	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 )
 
 type Validation struct {
 	validation *validator.Validate
 }
 
-func NewValidation() *Validation {
+func NewValidation(db *gorm.DB) *Validation {
 	validation := validator.New()
+
+	// register custom unique validation
+	validation.RegisterValidation("unique", func(fl validator.FieldLevel) bool {
+		// fmt.Println(fl.StructFieldName())
+		// // get parameter dari tag struct validate
+		table := fl.Param()
+		field := strings.ToLower(fl.StructFieldName())
+		var total int64
+		err := db.Table(table).Where(""+field+" = ?", fl.Field()).Count(&total).Error
+		if err != nil {
+			fmt.Println(err)
+		}
+		// // Return true if the count is zero (i.e., the value is unique)
+		return total == 0
+	})
+
+	validation.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		// skip if tag key says it should be ignored
+		if name == "-" {
+			return ""
+		}
+		return name
+	})
+
 	return &Validation{
 		validation: validation,
 	}
@@ -43,7 +71,7 @@ func GetErrorMsg(fe validator.FieldError) string {
 	case "email":
 		return "format email salah"
 	case "unique":
-		return "data exist"
+		return fe.Field() + " not avaiable"
 	case "min":
 		return "minimal " + fe.Param() + " karakter"
 	case "max":
@@ -52,6 +80,8 @@ func GetErrorMsg(fe validator.FieldError) string {
 		return "Harus Image"
 	case "number":
 		return "harus numeric"
+	case "eqfield":
+		return "field tidak sama dengan " + fe.Param()
 	}
 	return "Unknown error"
 }
