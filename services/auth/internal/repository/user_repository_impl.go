@@ -1,11 +1,13 @@
 package repository
 
 import (
+	"github.com/adityasuryadi/go-shop/pkg/logger"
 	"github.com/adityasuryadi/go-shop/services/auth/internal/entity"
 	"gorm.io/gorm"
 )
 
 type UserRepositoryImpl struct {
+	log *logger.Logger
 }
 
 // FindUserByEmail implements UserRepository.
@@ -18,6 +20,17 @@ func (r *UserRepositoryImpl) FindUserByEmail(db *gorm.DB, email string) (*entity
 	return user, nil
 }
 
-func NewUserRespository() UserRepository {
-	return &UserRepositoryImpl{}
+func (r *UserRepositoryImpl) Insert(db *gorm.DB, user *entity.User) (*entity.User, error) {
+	err := db.Create(user).Error
+	if err != nil {
+		r.log.Errorf("failed to create user ", err)
+		return nil, err
+	}
+	return user, nil
+}
+
+func NewUserRespository(logger *logger.Logger) UserRepository {
+	return &UserRepositoryImpl{
+		log: logger,
+	}
 }

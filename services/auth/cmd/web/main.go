@@ -20,7 +20,7 @@ func main() {
 	validation := config.NewValidation()
 	db := config.NewDatabase(configViper)
 	router := chi.NewRouter()
-	userRepository := repository.NewUserRespository()
+	userRepository := repository.NewUserRespository(logger)
 	redisClient := config.NewRedis(configViper)
 	authUsecase := usecase.NewAuthUsecase(userRepository, db, jwtConfig, logger, validation, redisClient)
 	authController := handlerHttp.NewAuthController(router, authUsecase, logger)

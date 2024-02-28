@@ -29,6 +29,50 @@ func NewAuthController(r *chi.Mux, authUsecase usecase.AuthUsecase, log *logger.
 	}
 }
 
+func (c *AuthController) Register(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	request := new(model.RegisterRequest)
+
+	if err := decoder.Decode(request); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("Bad Request")
+		return
+	}
+
+	validation := new(config.Validation)
+	err := c.Usecase.Register(request)
+
+	if err != nil && err.Status == exception.ERRRBADREQUEST {
+		errValidation := validation.ErrorJson(err.Errors)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.ErrorResponse[any]{
+			Code:   http.StatusBadRequest,
+			Status: "BAD_REQUEST",
+			Error:  errValidation,
+		})
+		return
+	}
+
+	if err != nil && err.Status == exception.ERRBUSSINESS {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(model.ErrorResponse[any]{
+			Code:   http.StatusInternalServerError,
+			Status: "INTERNAL_SERVER_ERROR",
+			Error:  err.Errors,
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(model.WebResponse[any]{
+		Code:   http.StatusOK,
+		Status: "OK",
+		Data:   nil,
+	})
+}
+
 func (c *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
@@ -154,6 +198,7 @@ func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *AuthController) InitRoute(Router *chi.Mux) {
+	Router.Post("/register", c.Register)
 	Router.Post("/login", c.Login)
 	Router.Post("/refreshtoken", c.RefreshToken)
 	Router.Group(func(r chi.Router) {

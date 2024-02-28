@@ -10,6 +10,7 @@ import (
 	"github.com/adityasuryadi/go-shop/pkg/logger"
 	"github.com/adityasuryadi/go-shop/pkg/util"
 	"github.com/adityasuryadi/go-shop/services/auth/internal/config"
+	"github.com/adityasuryadi/go-shop/services/auth/internal/entity"
 	"github.com/adityasuryadi/go-shop/services/auth/internal/model"
 	"github.com/adityasuryadi/go-shop/services/auth/internal/repository"
 	"github.com/redis/go-redis/v9"
@@ -34,6 +35,37 @@ func NewAuthUsecase(userRepo repository.UserRepository, db *gorm.DB, jwtConfig *
 		validation:     validation,
 		redisClient:    redisClient,
 	}
+}
+
+func (u *AuthUsecaseImpl) Register(request *model.RegisterRequest) *exception.CustomError {
+
+	err := u.validation.ValidateRequest(request)
+	if err != nil {
+		return &exception.CustomError{
+			Status: exception.ERRRBADREQUEST,
+			Errors: err,
+		}
+	}
+	tx := u.db.Begin()
+	defer func() {
+		if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	user := &entity.User{
+		Email:    request.Email,
+		Password: request.Password,
+	}
+	_, err = u.userRepository.Insert(tx, user)
+	if err != nil {
+		u.logger.Errorf("failed to insert user ", err)
+		return &exception.CustomError{
+			Status: exception.ERRBUSSINESS,
+			Errors: err,
+		}
+	}
+	return nil
 }
 
 func (u *AuthUsecaseImpl) Login(request *model.LoginRequest) (*model.LoginResponse, *exception.CustomError) {

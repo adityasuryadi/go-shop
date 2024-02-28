@@ -8,5 +8,6 @@ import (
 type AuthUsecase interface {
 	Login(request *model.LoginRequest) (*model.LoginResponse, *exception.CustomError)
 	RefreshToken(refreshToken string) (*model.LoginResponse, *exception.CustomError)
+	Register(request *model.RegisterRequest) *exception.CustomError
 	Logout(token string) error
 }

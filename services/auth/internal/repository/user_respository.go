@@ -6,5 +6,6 @@ import (
 )
 
 type UserRepository interface {
+	Insert(db *gorm.DB, user *entity.User) (*entity.User, error)
 	FindUserByEmail(db *gorm.DB, email string) (*entity.User, error)
 }
