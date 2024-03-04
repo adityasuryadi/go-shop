@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/adityasuryadi/go-shop/pkg/logger"
 	"github.com/adityasuryadi/go-shop/services/auth/internal/entity"
 	"gorm.io/gorm"
@@ -27,6 +29,14 @@ func (r *UserRepositoryImpl) Insert(db *gorm.DB, user *entity.User) (*entity.Use
 		return nil, err
 	}
 	return user, nil
+}
+
+func (r *UserRepositoryImpl) VerifyUser(db *gorm.DB, email string) error {
+	err := db.Where("email = ?", email).Update("verified_at", time.Now().Unix()).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewUserRespository(logger *logger.Logger) UserRepository {

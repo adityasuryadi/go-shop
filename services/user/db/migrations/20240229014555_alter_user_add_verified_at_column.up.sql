@@ -1,0 +1,3 @@
+ALTER TABLE users 
+ADD deleted_at BIGINT DEFAULT 0,
+ADD verified_at BIGINT DEFAULT NULL;

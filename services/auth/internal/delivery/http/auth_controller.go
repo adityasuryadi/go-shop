@@ -197,10 +197,38 @@ func (c *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (c *AuthController) Verify(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+	if token == "" {
+		json.NewEncoder(w).Encode(model.ErrorResponse[any]{
+			Code:   http.StatusUnauthorized,
+			Status: "UNAUTHORIZED",
+			Error:  "UNAUTHORIZED",
+		})
+		return
+
+	}
+	err := c.Usecase.ActivationUser(token)
+	if err != nil {
+		json.NewEncoder(w).Encode(model.ErrorResponse[any]{
+			Code:   http.StatusNotFound,
+			Status: "NOT_FOUND",
+			Error:  "NOT_FOUND",
+		})
+		return
+	}
+	json.NewEncoder(w).Encode(model.WebResponse[*model.LoginResponse]{
+		Code:   http.StatusOK,
+		Status: "OK",
+		Data:   nil,
+	})
+}
+
 func (c *AuthController) InitRoute(Router *chi.Mux) {
 	Router.Post("/register", c.Register)
 	Router.Post("/login", c.Login)
 	Router.Post("/refreshtoken", c.RefreshToken)
+	Router.Post("/verify/:token", func(w http.ResponseWriter, r *http.Request) {})
 	Router.Group(func(r chi.Router) {
 		r.Use(middleware.Verify)
 		r.Get("/check", c.Check)

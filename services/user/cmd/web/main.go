@@ -17,10 +17,14 @@ import (
 func main() {
 	configViper := config.NewViper()
 	logger := logger.NewLogger()
+	channel, err := config.NewRabbitMqChannell(configViper, logger)
+	if err != nil {
+		logger.Error("failed to create channel", err)
+	}
 	db := config.NewDatabase(configViper)
 	router := mux.NewRouter()
 	userRepository := repository.NewUserRepository(logger)
-	userUsecase := usecase.NewUserUsecase(db, userRepository)
+	userUsecase := usecase.NewUserUsecase(db, userRepository, channel)
 	userController := handlerHttp.NewUserController(router, userUsecase, logger)
 
 	userController.InitRoute(router)

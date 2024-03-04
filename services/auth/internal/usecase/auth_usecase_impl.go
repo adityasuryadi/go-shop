@@ -2,7 +2,10 @@ package usecase
 
 import (
 	"context"
+	"crypto/sha1"
 	"errors"
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -10,7 +13,6 @@ import (
 	"github.com/adityasuryadi/go-shop/pkg/logger"
 	"github.com/adityasuryadi/go-shop/pkg/util"
 	"github.com/adityasuryadi/go-shop/services/auth/internal/config"
-	"github.com/adityasuryadi/go-shop/services/auth/internal/entity"
 	"github.com/adityasuryadi/go-shop/services/auth/internal/model"
 	"github.com/adityasuryadi/go-shop/services/auth/internal/repository"
 	"github.com/redis/go-redis/v9"
@@ -37,8 +39,43 @@ func NewAuthUsecase(userRepo repository.UserRepository, db *gorm.DB, jwtConfig *
 	}
 }
 
-func (u *AuthUsecaseImpl) Register(request *model.RegisterRequest) *exception.CustomError {
+// func (u *AuthUsecaseImpl) VerifyUser(token string) error {
+// 	token = strings.Replace(token, "Bearer ", "", 1)
+// 	claims := u.jwtConfig.DecodeTokenString(token)
+// 	email := claims["email"].(string)
+// 	redisKey := "refresh_token:" + email + ":" + token
+// 	u.redisClient.Del(context.Background(), redisKey)
+// 	return nil
+// }
 
+func (u *AuthUsecaseImpl) ActivationUser(token string) *exception.CustomError {
+	// get token from redis
+	ctx := context.Background()
+	redisKey := "verify_account_token:" + token
+	val := u.redisClient.Get(ctx, redisKey)
+	email := val.Val()
+	{
+		if email == "" {
+			return &exception.CustomError{
+				Errors: errors.New("token invalid"),
+				Status: exception.ERRBUSSINESS,
+			}
+		}
+	}
+
+	err := u.userRepository.VerifyUser(u.db, email)
+	if err != nil {
+		return &exception.CustomError{
+			Errors: err,
+			Status: exception.ERRBUSSINESS,
+		}
+	}
+
+	u.redisClient.Del(ctx, redisKey)
+	return nil
+}
+
+func (u *AuthUsecaseImpl) Register(request *model.RegisterRequest) *exception.CustomError {
 	err := u.validation.ValidateRequest(request)
 	if err != nil {
 		return &exception.CustomError{
@@ -46,6 +83,7 @@ func (u *AuthUsecaseImpl) Register(request *model.RegisterRequest) *exception.Cu
 			Errors: err,
 		}
 	}
+
 	tx := u.db.Begin()
 	defer func() {
 		if err := tx.Commit().Error; err != nil {
@@ -53,11 +91,18 @@ func (u *AuthUsecaseImpl) Register(request *model.RegisterRequest) *exception.Cu
 		}
 	}()
 
-	user := &entity.User{
-		Email:    request.Email,
-		Password: request.Password,
-	}
-	_, err = u.userRepository.Insert(tx, user)
+	// user := &entity.User{
+	// 	Email:    request.Email,
+	// 	Password: request.Password,
+	// }
+
+	// timeout := 1000 * time.Millisecond
+	// client := httpclient.NewClient(httpclient.WithHTTPTimeout(timeout))
+
+	// url := "http://localhost:8000/user"
+	// res,err := client.Post(url,request,nil)
+
+	// result, err := u.userRepository.Insert(tx, user)
 	if err != nil {
 		u.logger.Errorf("failed to insert user ", err)
 		return &exception.CustomError{
@@ -65,6 +110,24 @@ func (u *AuthUsecaseImpl) Register(request *model.RegisterRequest) *exception.Cu
 			Errors: err,
 		}
 	}
+
+	// create token verify email and store in redis
+	ctx := context.Background()
+	var token string
+	token = ""
+	var randInt = strconv.Itoa(int(time.Now().Unix()))
+	var sha = sha1.New()
+	sha.Write([]byte(randInt + request.Email + "rahasia"))
+	var encrypted = sha.Sum(nil)
+	token = fmt.Sprintf("%x", encrypted)
+	u.redisClient.Set(ctx, "verify_account_token:"+token, request.Email, time.Duration(time.Hour*24))
+
+	go func() {
+		mail := config.NewMail()
+		mailBody := "Hello, <b>have a nice day</b> this is your link verify http://localhost:8001/verify/" + token
+		mail.SendMail(request.Email, mailBody)
+	}()
+
 	return nil
 }
 

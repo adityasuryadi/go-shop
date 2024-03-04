@@ -10,4 +10,5 @@ type AuthUsecase interface {
 	RefreshToken(refreshToken string) (*model.LoginResponse, *exception.CustomError)
 	Register(request *model.RegisterRequest) *exception.CustomError
 	Logout(token string) error
+	ActivationUser(token string) *exception.CustomError
 }
