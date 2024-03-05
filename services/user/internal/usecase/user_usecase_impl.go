@@ -66,7 +66,7 @@ func (u *UserUsecaseImpl) Insert(ctx context.Context, request *model.CreateUserR
 		Password:  hashPassword,
 	}
 
-	defer u.channel.Close()
+	// defer u.channel.Close()
 	userProducer.SetupExchangeAndQueuePublisher()
 	userProducer.Publish(userEvent)
 	return response, nil

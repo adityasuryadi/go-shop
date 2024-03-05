@@ -26,7 +26,7 @@ func main() {
 	userRepository := repository.NewUserRepository(logger)
 	userUsecase := usecase.NewUserUsecase(db, userRepository, channel)
 	userController := handlerHttp.NewUserController(router, userUsecase, logger)
-
+	defer channel.Close()
 	userController.InitRoute(router)
 	srv := &http.Server{
 		Handler: router,
