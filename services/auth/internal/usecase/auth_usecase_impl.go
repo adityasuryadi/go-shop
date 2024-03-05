@@ -75,60 +75,23 @@ func (u *AuthUsecaseImpl) ActivationUser(token string) *exception.CustomError {
 	return nil
 }
 
-func (u *AuthUsecaseImpl) Register(request *model.RegisterRequest) *exception.CustomError {
-	err := u.validation.ValidateRequest(request)
-	if err != nil {
-		return &exception.CustomError{
-			Status: exception.ERRRBADREQUEST,
-			Errors: err,
-		}
-	}
-
-	tx := u.db.Begin()
-	defer func() {
-		if err := tx.Commit().Error; err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	// user := &entity.User{
-	// 	Email:    request.Email,
-	// 	Password: request.Password,
-	// }
-
-	// timeout := 1000 * time.Millisecond
-	// client := httpclient.NewClient(httpclient.WithHTTPTimeout(timeout))
-
-	// url := "http://localhost:8000/user"
-	// res,err := client.Post(url,request,nil)
-
-	// result, err := u.userRepository.Insert(tx, user)
-	if err != nil {
-		u.logger.Errorf("failed to insert user ", err)
-		return &exception.CustomError{
-			Status: exception.ERRBUSSINESS,
-			Errors: err,
-		}
-	}
-
+func (u *AuthUsecaseImpl) Register(email string) {
 	// create token verify email and store in redis
 	ctx := context.Background()
 	var token string
 	token = ""
 	var randInt = strconv.Itoa(int(time.Now().Unix()))
 	var sha = sha1.New()
-	sha.Write([]byte(randInt + request.Email + "rahasia"))
+	sha.Write([]byte(randInt + email + "rahasia"))
 	var encrypted = sha.Sum(nil)
 	token = fmt.Sprintf("%x", encrypted)
-	u.redisClient.Set(ctx, "verify_account_token:"+token, request.Email, time.Duration(time.Hour*24))
+	u.redisClient.Set(ctx, "verify_account_token:"+token, email, time.Duration(time.Hour*24))
 
 	go func() {
 		mail := config.NewMail()
 		mailBody := "Hello, <b>have a nice day</b> this is your link verify http://localhost:8001/verify/" + token
-		mail.SendMail(request.Email, mailBody)
+		mail.SendMail(email, mailBody)
 	}()
-
-	return nil
 }
 
 func (u *AuthUsecaseImpl) Login(request *model.LoginRequest) (*model.LoginResponse, *exception.CustomError) {

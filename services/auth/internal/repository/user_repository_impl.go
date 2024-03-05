@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/adityasuryadi/go-shop/pkg/logger"
@@ -32,7 +33,9 @@ func (r *UserRepositoryImpl) Insert(db *gorm.DB, user *entity.User) (*entity.Use
 }
 
 func (r *UserRepositoryImpl) VerifyUser(db *gorm.DB, email string) error {
-	err := db.Where("email = ?", email).Update("verified_at", time.Now().Unix()).Error
+	// var user *entity.User
+	err := db.Model(&entity.User{}).Where("email = ?", email).Update("verified_at", time.Now().Unix()).Error
+	fmt.Println(err)
 	if err != nil {
 		return err
 	}

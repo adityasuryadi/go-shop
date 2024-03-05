@@ -55,7 +55,7 @@ func (u *UserUsecaseImpl) Insert(ctx context.Context, request *model.CreateUserR
 	userProducerConfig := &messaging.ProducerConfig{
 		Exchange:   "user.created",
 		QueueName:  "user.create",
-		RoutingKey: "user.create",
+		RoutingKey: "create",
 	}
 	userProducer := messaging.NewUserProducer(u.channel, userProducerConfig, apilog)
 	userEvent := &model.CreateUserEvent{

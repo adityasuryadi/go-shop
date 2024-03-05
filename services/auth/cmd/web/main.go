@@ -14,7 +14,8 @@ import (
 )
 
 func main() {
-	configViper := config.NewViper()
+	path := "./services/user"
+	configViper := config.NewViper(path)
 	logger := logger.NewLogger()
 	jwtConfig := config.NewJWT(configViper)
 	db := config.NewDatabase(configViper)

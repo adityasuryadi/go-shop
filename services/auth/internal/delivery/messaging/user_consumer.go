@@ -5,15 +5,18 @@ import (
 	"log"
 
 	"github.com/adityasuryadi/go-shop/pkg/logger"
+	"github.com/adityasuryadi/go-shop/services/auth/internal/usecase"
 )
 
 type UserConsumer struct {
-	Log *logger.Logger
+	Log         *logger.Logger
+	AuthUsecase usecase.AuthUsecase
 }
 
-func NewUserConsumer(log *logger.Logger) *UserConsumer {
+func NewUserConsumer(log *logger.Logger, authUsecase usecase.AuthUsecase) *UserConsumer {
 	return &UserConsumer{
-		Log: log,
+		Log:         log,
+		AuthUsecase: authUsecase,
 	}
 }
 
@@ -32,6 +35,7 @@ func (c *UserConsumer) Consume(message []byte) error {
 		log.Fatal("failed unmarshal")
 		return err
 	}
+	c.AuthUsecase.Register(user.Email)
 	c.Log.Info("processDeliveries deliveryTag% v", user)
 	return nil
 }
