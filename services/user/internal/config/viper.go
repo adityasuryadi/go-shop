@@ -8,14 +8,14 @@ import (
 
 // NewViper is a function to load config from config.json
 // You can change the implementation, for example load from env file, consul, etcd, etc
-func NewViper() *viper.Viper {
+func NewViper(path string) *viper.Viper {
 	config := viper.New()
 
 	config.SetConfigName("config")
 	config.SetConfigType("json")
-	config.AddConfigPath("./services/user")
+	// config.AddConfigPath("./services/user")
 
-	// config.AddConfigPath("./../../")
+	config.AddConfigPath(path)
 	err := config.ReadInConfig()
 
 	if err != nil {

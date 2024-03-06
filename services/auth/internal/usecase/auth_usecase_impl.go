@@ -39,15 +39,6 @@ func NewAuthUsecase(userRepo repository.UserRepository, db *gorm.DB, jwtConfig *
 	}
 }
 
-// func (u *AuthUsecaseImpl) VerifyUser(token string) error {
-// 	token = strings.Replace(token, "Bearer ", "", 1)
-// 	claims := u.jwtConfig.DecodeTokenString(token)
-// 	email := claims["email"].(string)
-// 	redisKey := "refresh_token:" + email + ":" + token
-// 	u.redisClient.Del(context.Background(), redisKey)
-// 	return nil
-// }
-
 func (u *AuthUsecaseImpl) ActivationUser(token string) *exception.CustomError {
 	// get token from redis
 	ctx := context.Background()
@@ -107,7 +98,7 @@ func (u *AuthUsecaseImpl) Login(request *model.LoginRequest) (*model.LoginRespon
 	db := u.db.Begin()
 	email := request.Email
 	user, err := u.userRepository.FindUserByEmail(db, email)
-	if err != nil {
+	if err != nil || user.VerifiedAt == 0 {
 		u.logger.Errorf("failed to find user ", err)
 		return nil, &exception.CustomError{
 			Status: exception.ERRNOTFOUND,

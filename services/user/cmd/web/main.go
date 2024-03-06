@@ -15,7 +15,8 @@ import (
 )
 
 func main() {
-	configViper := config.NewViper()
+	path := "./../../"
+	configViper := config.NewViper(path)
 	logger := logger.NewLogger()
 	channel, err := config.NewRabbitMqChannell(configViper, logger)
 	if err != nil {
