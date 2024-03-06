@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/adityasuryadi/go-shop/pkg/exception"
 	"github.com/adityasuryadi/go-shop/pkg/logger"
+	"github.com/adityasuryadi/go-shop/services/user/internal/config"
 	"github.com/adityasuryadi/go-shop/services/user/internal/model"
 	"github.com/adityasuryadi/go-shop/services/user/internal/usecase"
 
@@ -37,8 +39,18 @@ func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response, err := c.Usecase.Insert(context.Background(), payload)
-	if err != nil {
-		c.logger.Errorf("failed to create user ", err)
+	validate := new(config.Validation)
+
+	if err != nil && err.Status == exception.ERRRBADREQUEST {
+		errResponse := model.ErrorResponse[any]{
+			Code:   http.StatusBadRequest,
+			Status: "BAD_REQUEST",
+			Error:  validate.ErrorJson(err.Errors),
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errResponse)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

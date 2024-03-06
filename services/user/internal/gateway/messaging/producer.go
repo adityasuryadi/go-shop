@@ -36,7 +36,9 @@ func (p *Producer[T]) SetupExchangeAndQueuePublisher() {
 		false,           // no-wait
 		nil,             // arguments)
 	)
-	p.Log.Error("Failed to declare an exchange", err)
+	if err != nil {
+		p.Log.Error("Failed to declare an exchange", err)
+	}
 
 	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	// defer cancel()
@@ -49,10 +51,14 @@ func (p *Producer[T]) SetupExchangeAndQueuePublisher() {
 		false,            // no-wait
 		nil,              // arguments
 	)
-	p.Log.Error("Failed to declare a queue", err)
+	if err != nil {
+		p.Log.Error("Failed to declare a queue", err)
+	}
 
 	err = ch.QueueBind(q.Name, p.pCfg.RoutingKey, p.pCfg.Exchange, false, nil)
-	p.Log.Error("Failed to declare a queue", err)
+	if err != nil {
+		p.Log.Error("Failed to declare a queue", err)
+	}
 }
 
 func (p *Producer[T]) CloseChannel() {

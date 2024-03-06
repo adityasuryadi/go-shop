@@ -10,9 +10,10 @@ type UserResponse struct {
 }
 
 type CreateUserRequest struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	Phone     string `json:"phone"`
-	Password  string `json:"password"`
+	Email                string `json:"email" validate:"required,email,unique=users"`
+	FirstName            string `json:"first_name" validate:"required"`
+	LastName             string `json:"last_name" validate:"required"`
+	Phone                string `json:"phone" validate:"required"`
+	Password             string `json:"password" validate:"required,min=4"`
+	PasswordConfirmation string `json:"password_confirmation" validate:"required,min=4,eqfield=Password"`
 }

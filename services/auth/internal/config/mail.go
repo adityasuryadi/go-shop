@@ -20,9 +20,8 @@ type Mail struct {
 func (m *Mail) SendMail(email, body string) {
 	mailer := gomail.NewMessage()
 	mailer.SetHeader("From", "adit@mail.com")
-	mailer.SetHeader("To", "recipient1@gmail.com", "emaillain@gmail.com")
-	mailer.SetAddressHeader("Cc", "adit@gmail.com", "Tra Lala La")
-	mailer.SetHeader("Subject", "Test mail")
+	mailer.SetHeader("To", email)
+	mailer.SetHeader("Subject", "Account Verification")
 	mailer.SetBody("text/html", body)
 	err := m.d.DialAndSend(mailer)
 	if err != nil {

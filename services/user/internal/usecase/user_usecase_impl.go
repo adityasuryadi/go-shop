@@ -3,7 +3,9 @@ package usecase
 import (
 	"context"
 
+	"github.com/adityasuryadi/go-shop/pkg/exception"
 	"github.com/adityasuryadi/go-shop/pkg/logger"
+	"github.com/adityasuryadi/go-shop/services/user/internal/config"
 	"github.com/adityasuryadi/go-shop/services/user/internal/entity"
 	"github.com/adityasuryadi/go-shop/services/user/internal/gateway/messaging"
 	"github.com/adityasuryadi/go-shop/services/user/internal/model"
@@ -19,18 +21,30 @@ type UserUsecaseImpl struct {
 	db         *gorm.DB
 	repository repository.UserRepository
 	channel    *amqp091.Channel
+	validation *config.Validation
 }
 
 // Insert implements UserUsecase.
-func (u *UserUsecaseImpl) Insert(ctx context.Context, request *model.CreateUserRequest) (*model.UserResponse, error) {
+func (u *UserUsecaseImpl) Insert(ctx context.Context, request *model.CreateUserRequest) (*model.UserResponse, *exception.CustomError) {
 	tx := u.db.WithContext(ctx).Begin()
 	defer tx.Rollback()
+
+	err := u.validation.ValidateRequest(request)
+	if err != nil {
+		return nil, &exception.CustomError{
+			Status: exception.ERRRBADREQUEST,
+			Errors: err,
+		}
+	}
 	apilog := logger.NewLogger()
 
 	hashPassword, err := hash.HashPassword([]byte(request.Password))
 	if err != nil {
 		apilog.Errorf("failed to create user ", err)
-		return nil, err
+		return nil, &exception.CustomError{
+			Status: exception.ERRRBADREQUEST,
+			Errors: err,
+		}
 	}
 	user := &entity.User{
 		FirtsName: request.FirstName,
@@ -42,14 +56,20 @@ func (u *UserUsecaseImpl) Insert(ctx context.Context, request *model.CreateUserR
 	result, err := u.repository.Create(tx, user)
 	if err != nil {
 		apilog.Errorf("failed to create user ", err)
-		return nil, err
+		return nil, &exception.CustomError{
+			Status: exception.ERRDOMAIN,
+			Errors: err,
+		}
 	}
 
 	response := converter.UserToResponse(result)
 
 	if err := tx.Commit().Error; err != nil {
 		apilog.Errorf("failed to create user ", err)
-		return nil, err
+		return nil, &exception.CustomError{
+			Status: exception.ERRDOMAIN,
+			Errors: err,
+		}
 	}
 
 	userProducerConfig := &messaging.ProducerConfig{
@@ -83,10 +103,11 @@ func (u *UserUsecaseImpl) FindById(id string) (*model.UserResponse, error) {
 	return response, nil
 }
 
-func NewUserUsecase(db *gorm.DB, userRepo repository.UserRepository, channel *amqp091.Channel) UserUsecase {
+func NewUserUsecase(db *gorm.DB, userRepo repository.UserRepository, channel *amqp091.Channel, validate *config.Validation) UserUsecase {
 	return &UserUsecaseImpl{
 		db:         db,
 		repository: userRepo,
 		channel:    channel,
+		validation: validate,
 	}
 }

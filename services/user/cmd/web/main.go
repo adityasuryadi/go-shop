@@ -22,9 +22,10 @@ func main() {
 		logger.Error("failed to create channel", err)
 	}
 	db := config.NewDatabase(configViper)
+	validation := config.NewValidation(db)
 	router := mux.NewRouter()
 	userRepository := repository.NewUserRepository(logger)
-	userUsecase := usecase.NewUserUsecase(db, userRepository, channel)
+	userUsecase := usecase.NewUserUsecase(db, userRepository, channel, validation)
 	userController := handlerHttp.NewUserController(router, userUsecase, logger)
 	defer channel.Close()
 	userController.InitRoute(router)
